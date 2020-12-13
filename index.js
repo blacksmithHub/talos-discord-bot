@@ -9,7 +9,7 @@ config({
 const client = new Discord.Client()
 
 const prefix = '!'
-const commands = ['reset', 'bind', 'help']
+const commands = ['reset', 'bind', 'help', 'me']
 
 const commandList = new Discord.MessageEmbed()
     .setColor('#f7b586')
@@ -18,6 +18,7 @@ const commandList = new Discord.MessageEmbed()
 		{ name: 'Command list', value: "`!help` \nTo show all available commands", inline: true },
         { name: 'Reset key', value: "`!reset <key>` \nAllows you to reset your key and use it on a new device", inline: true },
         { name: 'Bind key', value: "`!bind <key>` \nBind/Activates your key to your discord account", inline: true },
+        { name: 'Subscription info', value: "`!me` \nTo show your subscription information", inline: true },
 	)
 
 client.once('ready', () => {
@@ -36,6 +37,32 @@ client.on('message', async message => {
     }
 
     switch (command) {
+        case 'me':
+            {
+                message.author.send('Please wait...')
+
+                await axios.post(`${process.env.API_URL}/api/verify`, 
+                    {
+                        discord_id: message.author.id
+                    })
+                    .then((res) => {
+                        if(res.status === 200 && res.data) {
+                            message.author.send(`Your key: ${res.data.master_key.key} \nStatus: ${res.data.status} \nExpiry: N/A`)
+                        }
+                    })
+                    .catch(({response}) => {
+                        console.log(response);
+                        switch (response.status) {
+                            case 422:
+                                message.author.send(response.data.message)
+                                break;
+                            default:
+                                message.author.send("Internal error, kindly report it to #bug-reports.")
+                                break;
+                        }
+                    })
+            }
+            break
         case 'help':
             message.author.send(commandList)
             break
