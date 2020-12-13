@@ -47,7 +47,7 @@ client.on('message', async message => {
                     })
                     .then((res) => {
                         if(res.status === 200 && res.data) {
-                            message.author.send(`Your key: ${res.data.master_key.key} \nStatus: ${res.data.status} \nExpiry: N/A`)
+                            message.author.send(`**Your key:** ${res.data.master_key.key} \n**Status:** ${res.data.status} \n**Expiry:** N/A`)
                         }
                     })
                     .catch(({response}) => {
