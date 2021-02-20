@@ -2,22 +2,21 @@ const Discord = require('discord.js')
 const axios = require('axios')
 const { config } = require('dotenv')
 
-config({
-    path: __dirname + "/.env"
-})
+config({ path: __dirname + "/.env" })
 
 const client = new Discord.Client()
 
 const prefix = '!'
-const commands = ['reset', 'bind', 'help', 'me']
+const commands = ['bind', 'unbind', 'me', 'reset', 'help']
 
 const commandList = new Discord.MessageEmbed()
     .setColor('#f7b586')
     .setTitle('Talos Bot Help Commands:')
 	.addFields(
 		{ name: 'Command list', value: "`!help` \nTo show all available commands", inline: true },
-        { name: 'Reset key', value: "`!reset <key>` \nAllows you to reset your key and use it on a new device", inline: true },
-        { name: 'Bind key', value: "`!bind <key>` \nBind/Activates your key to your discord account", inline: true },
+        { name: 'Bind key', value: "`!bind <key>` \nBind your key to your discord account", inline: true },
+        { name: 'Unbind key', value: "`!unbind <key>` \nAllows you to unbind your key", inline: true },
+        { name: 'Reset key', value: "`!reset <key>` \nAllows you to reset your key", inline: true },
         { name: 'Subscription info', value: "`!me` \nTo show your subscription information", inline: true },
 	)
 
@@ -41,88 +40,139 @@ client.on('message', async message => {
             {
                 message.author.send('Please wait...')
 
-                await axios.post(`${process.env.API_URL}/api/verify`, 
+                await axios.post(`${process.env.API_URL}/api/me`, 
                     {
                         discord_id: message.author.id
                     })
-                    .then((res) => {
-                        if(res.status === 200 && res.data) {
-                            message.author.send(`**Your key:** ${res.data.master_key.key} \n**Status:** ${res.data.status} \n**Expiry:** N/A`)
-                        }
+                    .then(({data}) => {
+                        console.log(data);
+
+                        message.author.send(`${'```'}Your key: ${data.master_key.key}\nStatus: ${data.status}\nExpiry: N/A${'```'}`)
                     })
                     .catch(({response}) => {
                         console.log(response);
+
                         switch (response.status) {
                             case 422:
                                 message.author.send(response.data.message)
                                 break;
                             default:
-                                message.author.send("Internal error, kindly report it to #bug-reports.")
+                                message.author.send("Internal error, kindly report it to `#bug-reports`.")
                                 break;
                         }
                     })
             }
             break
+
         case 'help':
             message.author.send(commandList)
             break
-        case 'reset':
+
+        case 'unbind':
             {
                 const key = message.content.slice((`!${command}`).length).trim()
 
                 if(!key) {
-                    message.author.send('Key is required')
+                    message.author.send(commandList)
                 } else {
                     message.author.send('Please wait...')
 
-                    await axios.put(`${process.env.API_URL}/api/unbind`, 
+                    await axios.post(`${process.env.API_URL}/api/unbind`, 
                         {
                             discord_id: message.author.id,
                             key: key
                         })
-                        .then((res) => {
-                            message.author.send('Your key has been reset')
+                        .then(({data}) => {
+                            console.log(data);
+
+                            if(data) {
+                                message.author.send(`Goodbye <@${message.author.id}>...`)
+                            }
                         })
                         .catch(({response}) => {
+                            console.log(response);
+
                             switch (response.status) {
                                 case 422:
                                     message.author.send(response.data.message)
                                     break;
                                 default:
-                                    message.author.send("Internal error, kindly report it to #bug-reports.")
+                                    message.author.send("Internal error, kindly report it to `#bug-reports`.")
                                     break;
                             }
                         })
                 }
             }
             break;
+
         case 'bind':
             {
                 const key = message.content.slice((`!${command}`).length).trim()
 
                 if(!key) {
-                    message.author.send('Key is required')
+                    message.author.send(commandList)
                     return
                 } else {
-                    message.author.send('Please wait...')
+                    message.author.send('Forging...')
 
-                    await axios.put(`${process.env.API_URL}/api/bind`, 
+                    await axios.post(`${process.env.API_URL}/api/bind`, 
                         {
                             discord_id: message.author.id,
                             username: message.author.username,
                             discriminator: message.author.discriminator,
                             key: key
                         })
-                        .then((res) => {
-                            message.author.send('You have successfully activated/bind your key!')
+                        .then(({data}) => {
+                            console.log(data);
+
+                            message.author.send(`Welcome <@${message.author.id}>!`)
                         })
                         .catch(({response}) => {
+                            console.log(response);
+
                             switch (response.status) {
                                 case 422:
                                     message.author.send(response.data.message)
                                     break;
                                 default:
-                                    message.author.send("Internal error, kindly report it to #bug-reports.")
+                                    message.author.send("Internal error, kindly report it to `#bug-reports`.")
+                                    break;
+                            }
+                        })
+                }
+            }
+            break;
+
+        case 'reset':
+            {
+                const key = message.content.slice((`!${command}`).length).trim()
+
+                if(!key) {
+                    message.author.send(commandList)
+                } else {
+                    message.author.send('Please wait...')
+
+                    await axios.post(`${process.env.API_URL}/api/reset`, 
+                        {
+                            discord_id: message.author.id,
+                            key: key
+                        })
+                        .then(({data}) => {
+                            console.log(data);
+
+                            if(data) {
+                                message.author.send(`You have successfully reset your key`)
+                            }
+                        })
+                        .catch(({response}) => {
+                            console.log(response);
+
+                            switch (response.status) {
+                                case 422:
+                                    message.author.send(response.data.message)
+                                    break;
+                                default:
+                                    message.author.send("Internal error, kindly report it to `#bug-reports`.")
                                     break;
                             }
                         })

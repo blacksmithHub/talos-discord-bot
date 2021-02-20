@@ -3,9 +3,7 @@
   "version": "1.0.0",
   "description": "Discord Bot",
   "main": "index.js",
-  "scripts": {
-    
-  },
+  "scripts": {},
   "author": "The Blacksmith",
   "license": "MIT",
   "dependencies": {
